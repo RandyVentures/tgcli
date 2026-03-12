@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/RandyVentures/tgcli/internal/out"
 )
 
 func newSendCmd(flags *rootFlags) *cobra.Command {
@@ -28,10 +31,42 @@ func newSendTextCmd(flags *rootFlags) *cobra.Command {
 		Use:   "text",
 		Short: "Send text message",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Printf("🚧 Send text to %d: '%s' - coming soon\n", to, message)
-			if replyTo != 0 {
-				fmt.Printf("   (reply to message %d)\n", replyTo)
+			ctx := context.Background()
+			a, lk, err := newApp(ctx, flags, true, false)
+			if err != nil {
+				return err
 			}
+			defer closeApp(a, lk)
+
+			tgClient := a.TGClient()
+			if tgClient == nil {
+				return fmt.Errorf("telegram client not initialized")
+			}
+
+			// Check if authenticated
+			authed, err := tgClient.IsAuthed(ctx)
+			if err != nil {
+				return wrapErr(err, "check auth status")
+			}
+			if !authed {
+				return fmt.Errorf("not authenticated. Run 'tgcli auth' first")
+			}
+
+			// Send message
+			msgID, err := tgClient.SendTextMessage(ctx, to, message, replyTo)
+			if err != nil {
+				return wrapErr(err, "send message failed")
+			}
+
+			if flags.asJSON {
+				return out.WriteJSON(os.Stdout, map[string]interface{}{
+					"status":     "sent",
+					"message_id": msgID,
+					"chat_id":    to,
+				})
+			}
+
+			fmt.Printf("✅ Message sent (ID: %d)\n", msgID)
 			return nil
 		},
 	}
@@ -52,13 +87,9 @@ func newSendFileCmd(flags *rootFlags) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "file",
-		Short: "Send file",
+		Short: "Send file (not implemented in Phase 1)",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Printf("🚧 Send file '%s' to %d - coming soon\n", file, to)
-			if caption != "" {
-				fmt.Printf("   Caption: %s\n", caption)
-			}
-			return nil
+			return fmt.Errorf("file sending not implemented in Phase 1")
 		},
 	}
 
@@ -78,10 +109,9 @@ func newSendReactionCmd(flags *rootFlags) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "reaction",
-		Short: "Send reaction to message",
+		Short: "Send reaction to message (not implemented in Phase 1)",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Printf("🚧 React with '%s' to message %d in chat %d - coming soon\n", emoji, messageID, chatID)
-			return nil
+			return fmt.Errorf("reactions not implemented in Phase 1")
 		},
 	}
 
