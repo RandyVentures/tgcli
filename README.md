@@ -155,7 +155,11 @@ Defaults to `~/.tgcli` (override with `--store DIR`).
 | `sync [--follow]` | Receive messages (continuous with --follow) |
 | `send text --to ID --message MSG` | Send text message |
 | `send file --to ID --file PATH` | Send file/document |
+| `send edit --chat ID --message-id ID --text MSG` | Edit a message |
+| `send delete --chat ID --message-id ID` | Delete a message |
+| `send forward --to ID --from ID --message-id ID` | Forward a message |
 | `chats list` | List stored chats |
+| `chats info --chat ID` | Get detailed chat info |
 | `messages list --chat ID` | List messages in a chat |
 | `messages search QUERY` | Search messages |
 | `groups list` | List stored groups |

@@ -16,6 +16,67 @@ func newChatsCmd(flags *rootFlags) *cobra.Command {
 	}
 
 	cmd.AddCommand(newChatsListCmd(flags))
+	cmd.AddCommand(newChatsInfoCmd(flags))
+
+	return cmd
+}
+
+func newChatsInfoCmd(flags *rootFlags) *cobra.Command {
+	var chatID int64
+
+	cmd := &cobra.Command{
+		Use:   "info",
+		Short: "Get detailed chat information",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx, cancel := withTimeout(cmd.Context(), flags)
+			defer cancel()
+
+			a, lk, err := newApp(ctx, flags, false, false)
+			if err != nil {
+				return err
+			}
+			defer closeApp(a, lk)
+
+			client, err := a.Client()
+			if err != nil {
+				return err
+			}
+
+			chat, err := client.GetChat(struct{ ChatID int64 }{ChatID: chatID})
+			if err != nil {
+				return err
+			}
+
+			if flags.asJSON {
+				return writeJSON(os.Stdout, chat)
+			}
+
+			fmt.Printf("Chat Info\n")
+			fmt.Printf("=========\n")
+			fmt.Printf("ID:          %d\n", chat.ID)
+			fmt.Printf("Type:        %s\n", chat.Type)
+			if chat.Title != "" {
+				fmt.Printf("Title:       %s\n", chat.Title)
+			}
+			if chat.UserName != "" {
+				fmt.Printf("Username:    @%s\n", chat.UserName)
+			}
+			if chat.FirstName != "" {
+				fmt.Printf("First Name:  %s\n", chat.FirstName)
+			}
+			if chat.LastName != "" {
+				fmt.Printf("Last Name:   %s\n", chat.LastName)
+			}
+			if chat.Description != "" {
+				fmt.Printf("Description: %s\n", chat.Description)
+			}
+
+			return nil
+		},
+	}
+
+	cmd.Flags().Int64Var(&chatID, "chat", 0, "chat ID (required)")
+	_ = cmd.MarkFlagRequired("chat")
 
 	return cmd
 }
