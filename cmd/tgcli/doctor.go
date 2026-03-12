@@ -55,7 +55,7 @@ func newDoctorCmd(flags *rootFlags) *cobra.Command {
 			fmt.Printf("✅ Bot: @%s (ID: %d)\n", me.UserName, me.ID)
 
 			// Check database stats
-			chats, _ := a.Store().ListChats(1000)
+			chats, _ := a.Store().ListChats(ctx, 1000)
 			fmt.Printf("📊 Stored chats: %d\n", len(chats))
 
 			if flags.asJSON {

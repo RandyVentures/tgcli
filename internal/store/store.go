@@ -1,7 +1,6 @@
 package store
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
 	"os"
@@ -79,12 +78,9 @@ func Open(storeDir string) (*Store, error) {
 		return nil, err
 	}
 
-	// Check if FTS5 is available
-	var ftsAvailable int
-	err = db.QueryRow("SELECT COUNT(*) FROM pragma_compile_options WHERE compile_options LIKE '%FTS5%'").Scan(&ftsAvailable)
-	if err == nil && ftsAvailable > 0 {
-		s.ftsEnabled = true
-	}
+	// FTS5 is not reliably available in pure Go SQLite (modernc.org/sqlite)
+	// Always use LIKE search for compatibility
+	s.ftsEnabled = false
 
 	// Set database file permissions (owner read/write only)
 	if err := os.Chmod(dbPath, DBFilePermissions); err != nil {

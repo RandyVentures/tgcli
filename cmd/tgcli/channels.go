@@ -35,7 +35,7 @@ func newChannelsListCmd(flags *rootFlags) *cobra.Command {
 			}
 			defer closeApp(a, lk)
 
-			chats, err := a.Store().ListChats(limit)
+			chats, err := a.Store().ListChats(ctx, limit)
 			if err != nil {
 				return fmt.Errorf("list chats: %w", err)
 			}
