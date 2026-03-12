@@ -6,13 +6,8 @@ import (
 	"path/filepath"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/RandyVentures/tgcli/internal/config"
 )
-
-// MaxFileSize is the maximum file size for uploads (50MB - Telegram limit)
-const MaxFileSize = 50 * 1024 * 1024
-
-// MaxMessageLength is the maximum message text length
-const MaxMessageLength = 4096
 
 // SendTextOptions for sending text messages.
 type SendTextOptions struct {
@@ -24,8 +19,8 @@ type SendTextOptions struct {
 // SendText sends a text message.
 func (c *Client) SendText(opts SendTextOptions) (*tgbotapi.Message, error) {
 	// Validate message length
-	if len(opts.Text) > MaxMessageLength {
-		return nil, fmt.Errorf("message too long (max %d characters)", MaxMessageLength)
+	if len(opts.Text) > config.MaxMessageLength {
+		return nil, fmt.Errorf("message too long (max %d characters)", config.MaxMessageLength)
 	}
 	if len(opts.Text) == 0 {
 		return nil, fmt.Errorf("message cannot be empty")
@@ -79,8 +74,8 @@ func validateFilePath(path string) error {
 	}
 
 	// Check file size
-	if info.Size() > MaxFileSize {
-		return fmt.Errorf("file too large (max %d MB)", MaxFileSize/1024/1024)
+	if info.Size() > config.MaxFileSize {
+		return fmt.Errorf("file too large (max %d MB)", config.MaxFileSize/1024/1024)
 	}
 	if info.Size() == 0 {
 		return fmt.Errorf("file is empty")
@@ -97,8 +92,8 @@ func (c *Client) SendFile(opts SendFileOptions) (*tgbotapi.Message, error) {
 	}
 
 	// Validate caption length
-	if len(opts.Caption) > MaxMessageLength {
-		return nil, fmt.Errorf("caption too long (max %d characters)", MaxMessageLength)
+	if len(opts.Caption) > config.MaxMessageLength {
+		return nil, fmt.Errorf("caption too long (max %d characters)", config.MaxMessageLength)
 	}
 
 	// Get absolute path
@@ -136,8 +131,8 @@ func (c *Client) SendPhoto(opts SendPhotoOptions) (*tgbotapi.Message, error) {
 	}
 
 	// Validate caption length
-	if len(opts.Caption) > MaxMessageLength {
-		return nil, fmt.Errorf("caption too long (max %d characters)", MaxMessageLength)
+	if len(opts.Caption) > config.MaxMessageLength {
+		return nil, fmt.Errorf("caption too long (max %d characters)", config.MaxMessageLength)
 	}
 
 	// Get absolute path

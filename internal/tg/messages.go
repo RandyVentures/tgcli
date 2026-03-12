@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/RandyVentures/tgcli/internal/config"
 )
 
 // EditMessageOptions for editing messages.
@@ -15,8 +16,8 @@ type EditMessageOptions struct {
 
 // EditMessage edits a text message.
 func (c *Client) EditMessage(opts EditMessageOptions) (*tgbotapi.Message, error) {
-	if len(opts.Text) > MaxMessageLength {
-		return nil, fmt.Errorf("message too long (max %d characters)", MaxMessageLength)
+	if len(opts.Text) > config.MaxMessageLength {
+		return nil, fmt.Errorf("message too long (max %d characters)", config.MaxMessageLength)
 	}
 	if len(opts.Text) == 0 {
 		return nil, fmt.Errorf("message cannot be empty")
