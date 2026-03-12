@@ -1,0 +1,14 @@
+{
+  "name": "tgcli",
+  "private": true,
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "tgcli": "bash -lc 'pnpm -s build >/dev/null && exec ./dist/tgcli \"$@\"' _",
+    "build": "mkdir -p dist && go build -o dist/tgcli ./cmd/tgcli",
+    "start": "pnpm -s build && ./dist/tgcli",
+    "test": "go test ./...",
+    "lint": "go vet ./...",
+    "format": "gofmt -w .",
+    "format:check": "bash -lc 'out=$(gofmt -l .); if [ -n \"$out\" ]; then echo \"$out\"; exit 1; fi'"
+  }
+}
