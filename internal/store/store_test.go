@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"path/filepath"
 	"testing"
 	"time"
@@ -19,14 +20,15 @@ func openTestDB(t *testing.T) *Store {
 
 func TestUpsertAndGetChat(t *testing.T) {
 	s := openTestDB(t)
+	ctx := context.Background()
 
 	// Insert a chat
-	if err := s.UpsertChat(123, "user", "Alice", "alice"); err != nil {
+	if err := s.UpsertChat(ctx, 123, "user", "Alice", "alice"); err != nil {
 		t.Fatalf("UpsertChat: %v", err)
 	}
 
 	// Retrieve it
-	chat, err := s.GetChat(123)
+	chat, err := s.GetChat(ctx, 123)
 	if err != nil {
 		t.Fatalf("GetChat: %v", err)
 	}
@@ -35,11 +37,11 @@ func TestUpsertAndGetChat(t *testing.T) {
 	}
 
 	// Update with new title
-	if err := s.UpsertChat(123, "user", "Alice Updated", "alice"); err != nil {
+	if err := s.UpsertChat(ctx, 123, "user", "Alice Updated", "alice"); err != nil {
 		t.Fatalf("UpsertChat update: %v", err)
 	}
 
-	chat, err = s.GetChat(123)
+	chat, err = s.GetChat(ctx, 123)
 	if err != nil {
 		t.Fatalf("GetChat after update: %v", err)
 	}
@@ -50,13 +52,14 @@ func TestUpsertAndGetChat(t *testing.T) {
 
 func TestListChats(t *testing.T) {
 	s := openTestDB(t)
+	ctx := context.Background()
 
 	// Insert multiple chats
-	_ = s.UpsertChat(1, "user", "Alice", "")
-	_ = s.UpsertChat(2, "group", "Group Chat", "")
-	_ = s.UpsertChat(3, "channel", "News Channel", "")
+	_ = s.UpsertChat(ctx, 1, "user", "Alice", "")
+	_ = s.UpsertChat(ctx, 2, "group", "Group Chat", "")
+	_ = s.UpsertChat(ctx, 3, "channel", "News Channel", "")
 
-	chats, err := s.ListChats(10)
+	chats, err := s.ListChats(ctx, 10)
 	if err != nil {
 		t.Fatalf("ListChats: %v", err)
 	}
@@ -67,12 +70,13 @@ func TestListChats(t *testing.T) {
 
 func TestListChatsLimit(t *testing.T) {
 	s := openTestDB(t)
+	ctx := context.Background()
 
 	for i := 1; i <= 10; i++ {
-		_ = s.UpsertChat(int64(i), "user", "User", "")
+		_ = s.UpsertChat(ctx, int64(i), "user", "User", "")
 	}
 
-	chats, err := s.ListChats(5)
+	chats, err := s.ListChats(ctx, 5)
 	if err != nil {
 		t.Fatalf("ListChats: %v", err)
 	}
@@ -83,12 +87,13 @@ func TestListChatsLimit(t *testing.T) {
 
 func TestUpsertAndGetUser(t *testing.T) {
 	s := openTestDB(t)
+	ctx := context.Background()
 
-	if err := s.UpsertUser(456, "John", "Doe", "johndoe", false); err != nil {
+	if err := s.UpsertUser(ctx, 456, "John", "Doe", "johndoe", false); err != nil {
 		t.Fatalf("UpsertUser: %v", err)
 	}
 
-	user, err := s.GetUser(456)
+	user, err := s.GetUser(ctx, 456)
 	if err != nil {
 		t.Fatalf("GetUser: %v", err)
 	}
@@ -102,20 +107,21 @@ func TestUpsertAndGetUser(t *testing.T) {
 
 func TestInsertAndListMessages(t *testing.T) {
 	s := openTestDB(t)
+	ctx := context.Background()
 
 	// Insert chat first
-	_ = s.UpsertChat(100, "user", "Test Chat", "")
+	_ = s.UpsertChat(ctx, 100, "user", "Test Chat", "")
 
 	// Insert messages
 	now := time.Now()
 	for i := 1; i <= 5; i++ {
-		err := s.InsertMessage(int64(i), 100, 200, now.Add(time.Duration(i)*time.Minute), "Message "+string(rune('0'+i)), 0, "", "")
+		err := s.InsertMessage(ctx, int64(i), 100, 200, now.Add(time.Duration(i)*time.Minute), "Message "+string(rune('0'+i)), 0, "", "")
 		if err != nil {
 			t.Fatalf("InsertMessage %d: %v", i, err)
 		}
 	}
 
-	messages, err := s.ListMessages(100, 10)
+	messages, err := s.ListMessages(ctx, ListMessagesParams{ChatID: 100, Limit: 10})
 	if err != nil {
 		t.Fatalf("ListMessages: %v", err)
 	}
@@ -131,16 +137,17 @@ func TestInsertAndListMessages(t *testing.T) {
 
 func TestSearchMessages(t *testing.T) {
 	s := openTestDB(t)
+	ctx := context.Background()
 
-	_ = s.UpsertChat(100, "user", "Test", "")
+	_ = s.UpsertChat(ctx, 100, "user", "Test", "")
 
 	now := time.Now()
-	_ = s.InsertMessage(1, 100, 200, now, "Hello world", 0, "", "")
-	_ = s.InsertMessage(2, 100, 200, now, "Goodbye world", 0, "", "")
-	_ = s.InsertMessage(3, 100, 200, now, "Nothing here", 0, "", "")
+	_ = s.InsertMessage(ctx, 1, 100, 200, now, "Hello world", 0, "", "")
+	_ = s.InsertMessage(ctx, 2, 100, 200, now, "Goodbye world", 0, "", "")
+	_ = s.InsertMessage(ctx, 3, 100, 200, now, "Nothing here", 0, "", "")
 
 	// Search for "world"
-	results, err := s.SearchMessages("world", 0, 10)
+	results, err := s.SearchMessages(ctx, SearchMessagesParams{Query: "world", Limit: 10})
 	if err != nil {
 		t.Fatalf("SearchMessages: %v", err)
 	}
@@ -149,7 +156,7 @@ func TestSearchMessages(t *testing.T) {
 	}
 
 	// Search in specific chat
-	results, err = s.SearchMessages("Hello", 100, 10)
+	results, err = s.SearchMessages(ctx, SearchMessagesParams{Query: "Hello", ChatID: 100, Limit: 10})
 	if err != nil {
 		t.Fatalf("SearchMessages with chat: %v", err)
 	}
@@ -160,16 +167,17 @@ func TestSearchMessages(t *testing.T) {
 
 func TestSearchMessagesEscapesWildcards(t *testing.T) {
 	s := openTestDB(t)
+	ctx := context.Background()
 
-	_ = s.UpsertChat(100, "user", "Test", "")
+	_ = s.UpsertChat(ctx, 100, "user", "Test", "")
 
 	now := time.Now()
-	_ = s.InsertMessage(1, 100, 200, now, "100% complete", 0, "", "")
-	_ = s.InsertMessage(2, 100, 200, now, "file_name.txt", 0, "", "")
-	_ = s.InsertMessage(3, 100, 200, now, "normal text", 0, "", "")
+	_ = s.InsertMessage(ctx, 1, 100, 200, now, "100% complete", 0, "", "")
+	_ = s.InsertMessage(ctx, 2, 100, 200, now, "file_name.txt", 0, "", "")
+	_ = s.InsertMessage(ctx, 3, 100, 200, now, "normal text", 0, "", "")
 
 	// Search for literal "%"
-	results, err := s.SearchMessages("%", 0, 10)
+	results, err := s.SearchMessages(ctx, SearchMessagesParams{Query: "%", Limit: 10})
 	if err != nil {
 		t.Fatalf("SearchMessages: %v", err)
 	}
@@ -178,7 +186,7 @@ func TestSearchMessagesEscapesWildcards(t *testing.T) {
 	}
 
 	// Search for literal "_"
-	results, err = s.SearchMessages("_", 0, 10)
+	results, err = s.SearchMessages(ctx, SearchMessagesParams{Query: "_", Limit: 10})
 	if err != nil {
 		t.Fatalf("SearchMessages: %v", err)
 	}
@@ -189,15 +197,16 @@ func TestSearchMessagesEscapesWildcards(t *testing.T) {
 
 func TestUpdateChatLastMessage(t *testing.T) {
 	s := openTestDB(t)
+	ctx := context.Background()
 
-	_ = s.UpsertChat(100, "user", "Test", "")
+	_ = s.UpsertChat(ctx, 100, "user", "Test", "")
 
 	now := time.Now().Unix()
-	if err := s.UpdateChatLastMessage(100, 999, now); err != nil {
+	if err := s.UpdateChatLastMessage(ctx, 100, 999, now); err != nil {
 		t.Fatalf("UpdateChatLastMessage: %v", err)
 	}
 
-	chat, err := s.GetChat(100)
+	chat, err := s.GetChat(ctx, 100)
 	if err != nil {
 		t.Fatalf("GetChat: %v", err)
 	}

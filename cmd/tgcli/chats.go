@@ -101,7 +101,7 @@ Run 'tgcli sync --follow' to populate the database with incoming messages.`,
 			}
 			defer closeApp(a, lk)
 
-			chats, err := a.Store().ListChats(limit)
+			chats, err := a.Store().ListChats(ctx, limit)
 			if err != nil {
 				return fmt.Errorf("list chats: %w", err)
 			}

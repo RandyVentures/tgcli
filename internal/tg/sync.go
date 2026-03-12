@@ -59,6 +59,8 @@ func (c *Client) processUpdate(update tgbotapi.Update) error {
 
 // processMessage handles a message update.
 func (c *Client) processMessage(msg *tgbotapi.Message) error {
+	ctx := context.Background() // Use background context for storage operations
+
 	// Store the message if we have a store
 	if c.store != nil {
 		// Store chat
@@ -83,13 +85,13 @@ func (c *Client) processMessage(msg *tgbotapi.Message) error {
 			}
 		}
 
-		if err := c.store.UpsertChat(msg.Chat.ID, chatType, chatTitle, msg.Chat.UserName); err != nil {
+		if err := c.store.UpsertChat(ctx, msg.Chat.ID, chatType, chatTitle, msg.Chat.UserName); err != nil {
 			return fmt.Errorf("store chat: %w", err)
 		}
 
 		// Store user if present
 		if msg.From != nil {
-			if err := c.store.UpsertUser(int64(msg.From.ID), msg.From.FirstName, msg.From.LastName, msg.From.UserName, msg.From.IsBot); err != nil {
+			if err := c.store.UpsertUser(ctx, int64(msg.From.ID), msg.From.FirstName, msg.From.LastName, msg.From.UserName, msg.From.IsBot); err != nil {
 				return fmt.Errorf("store user: %w", err)
 			}
 		}
@@ -105,6 +107,7 @@ func (c *Client) processMessage(msg *tgbotapi.Message) error {
 		}
 
 		if err := c.store.InsertMessage(
+			ctx,
 			int64(msg.MessageID),
 			msg.Chat.ID,
 			fromUserID,

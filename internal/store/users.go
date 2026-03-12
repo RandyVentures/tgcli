@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"fmt"
 	"time"
 )
@@ -17,13 +18,13 @@ type User struct {
 }
 
 // UpsertUser inserts or updates a user.
-func (s *Store) UpsertUser(id int64, firstName, lastName, username string, isBot bool) error {
+func (s *Store) UpsertUser(ctx context.Context, id int64, firstName, lastName, username string, isBot bool) error {
 	now := time.Now().UTC().Unix()
 	isBotInt := 0
 	if isBot {
 		isBotInt = 1
 	}
-	_, err := s.db.Exec(`
+	_, err := s.db.ExecContext(ctx, `
 		INSERT INTO users (id, first_name, last_name, username, is_bot, updated_at)
 		VALUES (?, ?, ?, ?, ?, ?)
 		ON CONFLICT(id) DO UPDATE SET
@@ -40,8 +41,8 @@ func (s *Store) UpsertUser(id int64, firstName, lastName, username string, isBot
 }
 
 // GetUser retrieves a user by ID.
-func (s *Store) GetUser(id int64) (*User, error) {
-	row := s.db.QueryRow(`
+func (s *Store) GetUser(ctx context.Context, id int64) (*User, error) {
+	row := s.db.QueryRowContext(ctx, `
 		SELECT id, first_name, last_name, username, phone, is_bot, updated_at
 		FROM users WHERE id = ?
 	`, id)
@@ -61,12 +62,15 @@ func (s *Store) GetUser(id int64) (*User, error) {
 }
 
 // ListUsers returns all users.
-func (s *Store) ListUsers(limit int) ([]User, error) {
+func (s *Store) ListUsers(ctx context.Context, limit int) ([]User, error) {
 	if limit <= 0 {
-		limit = 100
+		limit = DefaultLimit
+	}
+	if limit > MaxLimit {
+		limit = MaxLimit
 	}
 
-	rows, err := s.db.Query(`
+	rows, err := s.db.QueryContext(ctx, `
 		SELECT id, first_name, last_name, username, phone, is_bot, updated_at
 		FROM users
 		ORDER BY updated_at DESC
@@ -75,7 +79,11 @@ func (s *Store) ListUsers(limit int) ([]User, error) {
 	if err != nil {
 		return nil, fmt.Errorf("list users: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		if closeErr := rows.Close(); closeErr != nil && err == nil {
+			err = fmt.Errorf("close rows: %w", closeErr)
+		}
+	}()
 
 	var users []User
 	for rows.Next() {
@@ -92,5 +100,9 @@ func (s *Store) ListUsers(limit int) ([]User, error) {
 		users = append(users, user)
 	}
 
-	return users, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate rows: %w", err)
+	}
+
+	return users, nil
 }

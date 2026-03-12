@@ -1,3 +1,4 @@
+// Package tg provides a wrapper around the Telegram Bot API client with local storage integration.
 package tg
 
 import (
@@ -8,18 +9,19 @@ import (
 	"github.com/RandyVentures/tgcli/internal/store"
 )
 
-// Client wraps the Telegram Bot API client.
+// Client wraps the Telegram Bot API client and provides integrated message storage.
+// It handles authentication, message sending/receiving, and persistence to local database.
 type Client struct {
 	bot      *tgbotapi.BotAPI
 	store    *store.Store
 	storeDir string
 }
 
-// Options for creating a new Client.
+// Options contains configuration for creating a new Telegram client.
 type Options struct {
-	StoreDir string
-	Token    string
-	Store    *store.Store
+	StoreDir string       // Directory for storing local data
+	Token    string       // Bot API token from BotFather
+	Store    *store.Store // Pre-opened store instance
 }
 
 // New creates a new Telegram Bot API client.

@@ -60,8 +60,14 @@ func validateFilePath(path string) error {
 		return fmt.Errorf("invalid path: %w", err)
 	}
 
+	// Resolve symlinks to prevent symlink attacks
+	realPath, err := filepath.EvalSymlinks(absPath)
+	if err != nil {
+		return fmt.Errorf("cannot resolve path: %w", err)
+	}
+
 	// Check file exists and is a regular file
-	info, err := os.Stat(absPath)
+	info, err := os.Stat(realPath)
 	if err != nil {
 		return fmt.Errorf("file not found: %w", err)
 	}
