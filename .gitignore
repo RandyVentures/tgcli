@@ -1,0 +1,32 @@
+# Binaries
+dist/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test artifacts
+*.test
+*.out
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+
+# Local data
+.tgcli/
+session.json
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+# Go
+vendor/
